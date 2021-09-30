@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponseRedirect
 from .models import Dept, Class, Student, Attendance, Course, Teacher, Assign, AttendanceTotal, time_slots, DAYS_OF_WEEK, AssignTime, AttendanceClass, StudentCourse, Marks, MarksClass
+from .models import test_name
 from django.urls import reverse
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
@@ -276,10 +277,12 @@ def marks_list(request, stud_id):
         try:
             sc = StudentCourse.objects.get(student=stud, course=ass.course)
         except StudentCourse.DoesNotExist:
-            sc = StudentCourse(student=stud, course=ass.course)
+            sc = StudentCourse(student=stud,course=ass.course)
             sc.save()
             sc.marks_set.create(type='I', name='Internal test 1')
             sc.marks_set.create(type='I', name='Internal test 2')
+            sc.marks_set.create(type='Q', name='Quiz 1')
+            sc.marks_set.create(type='Q', name='Quiz 2')
             sc.marks_set.create(type='S', name='Semester End Exam')
         sc_list.append(sc)
 
@@ -293,6 +296,9 @@ def marks_list(request, stud_id):
 def t_marks_list(request, assign_id):
     ass = get_object_or_404(Assign, id=assign_id)
     m_list = MarksClass.objects.filter(assign=ass)
+    for m in test_name:
+        print(m)
+
     return render(request, 'info/t_marks_list.html', {'m_list': m_list})
 
 
@@ -319,11 +325,11 @@ def marks_confirm(request, marks_c_id):
         mark = request.POST[s.USN]
         sc = StudentCourse.objects.get(course=cr, student=s)
         m = sc.marks_set.get(name=mc.name)
+        print(mc.name)
         m.marks1 = mark
         m.save()
     mc.status = True
     mc.save()
-
     return HttpResponseRedirect(reverse('t_marks_list', args=(ass.id,)))
 
 

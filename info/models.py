@@ -35,6 +35,8 @@ DAYS_OF_WEEK = (
 test_name = (
     ('Internal test 1', 'Internal test 1'),
     ('Internal test 2', 'Internal test 2'),
+    ('Quiz 1', 'Quiz1'),
+    ('Quiz 2', 'Quiz2'),
     ('Semester End Exam', 'Semester End Exam'),
 )
 
@@ -59,6 +61,9 @@ class Dept(models.Model):
 
     def __str__(self):
         return self.name
+
+
+
 
 
 class Course(models.Model):
@@ -96,6 +101,18 @@ class Student(models.Model):
 
     def __str__(self):
         return self.name
+
+
+
+class Points(models.Model):
+    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    sub_name = models.CharField(max_length=20)
+    f_internal = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(20)])
+    s_internal = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(20)])
+    f_quiz = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(5)])
+    s_quiz = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(5)])
+    sem = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)])
+
 
 
 class Teacher(models.Model):
@@ -233,7 +250,9 @@ class Marks(models.Model):
     def total_marks(self):
         if self.name == 'Semester End Exam':
             return 100
-        return 25
+        elif self.name == 'Internal test 1' or self.name=='Internal test 2':
+            return 25
+        return 5
 
 
 class MarksClass(models.Model):
@@ -248,11 +267,12 @@ class MarksClass(models.Model):
     def total_marks(self):
         if self.name == 'Semester End Exam':
             return 100
-        return 25
+        elif self.name == 'Internal test 1' or self.name == 'Internal test 2':
+            return 25
+        return 5
 
 
 # Triggers
-
 
 def daterange(start_date, end_date):
     for n in range(int ((end_date - start_date).days)):
@@ -270,8 +290,8 @@ days = {
 
 def create_attendance(sender, instance, **kwargs):
     if kwargs['created']:
-        start_date = date(2019, 3, 1)
-        end_date = date(2019, 5, 24)
+        start_date = date(2021, 8, 1)
+        end_date = date(2021, 10, 24)
         for single_date in daterange(start_date, end_date):
             if single_date.isoweekday() == days[instance.day]:
                 try:
@@ -293,7 +313,8 @@ def create_marks(sender, instance, **kwargs):
                     sc.save()
                     sc.marks_set.create(name='Internal test 1')
                     sc.marks_set.create(name='Internal test 2')
-
+                    sc.marks_set.create(name='Quiz 1')
+                    sc.marks_set.create(name='Quiz 2')
                     sc.marks_set.create(name='Semester End Exam')
         elif hasattr(instance, 'course'):
             stud_list = instance.class_id.student_set.all()
@@ -306,13 +327,15 @@ def create_marks(sender, instance, **kwargs):
                     sc.save()
                     sc.marks_set.create(name='Internal test 1')
                     sc.marks_set.create(name='Internal test 2')
-
+                    sc.marks_set.create(name='Quiz 1')
+                    sc.marks_set.create(name='Quiz 2')
                     sc.marks_set.create(name='Semester End Exam')
 
 
 def create_marks_class(sender, instance, **kwargs):
     if kwargs['created']:
         for name in test_name:
+
             try:
                 MarksClass.objects.get(assign=instance, name=name[0])
             except MarksClass.DoesNotExist:
